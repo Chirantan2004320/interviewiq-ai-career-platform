@@ -31,3 +31,6 @@ prisma/dev.db
 
 # VS Code
 .vscode/settings.json
+
+
+Connection_String = postgresql://neondb_owner:npg_3ci4vbIeARsg@ep-steep-tree-aouult9m.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require

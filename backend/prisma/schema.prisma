@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ExperienceLevel {
+  STUDENT
+  FRESHER
+  JUNIOR
+  MID_LEVEL
+  SENIOR
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+model User {
+  id String @id @default(uuid())
+
+  name         String
+  email        String @unique
+  passwordHash String
+
+  role UserRole @default(USER)
+
+  isVerified Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile Profile?
+
+  resumes      Resume[]
+  chatSessions ChatSession[]
+
+  @@index([email])
+}
+
+model Domain {
+  id String @id @default(uuid())
+
+  name String
+  slug String @unique
+
+  createdAt DateTime @default(now())
+
+  roles    Role[]
+  profiles Profile[]
+}
+
+model Role {
+  id String @id @default(uuid())
+
+  domainId String
+
+  name String
+  slug String @unique
+
+  createdAt DateTime @default(now())
+
+  domain Domain @relation(fields: [domainId], references: [id])
+
+  profiles   Profile[]
+  roleSkills RoleSkill[]
+
+  @@index([domainId])
+}
+
+model Profile {
+  id String @id @default(uuid())
+
+  userId String @unique
+
+  domainId String?
+  roleId   String?
+
+  experienceLevel ExperienceLevel?
+
+  bio String?
+
+  githubUrl   String?
+  linkedinUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  domain Domain? @relation(fields: [domainId], references: [id])
+
+  role Role? @relation(fields: [roleId], references: [id])
+
+  userSkills UserSkill[]
+
+  @@index([domainId])
+  @@index([roleId])
+}
+
+model Skill {
+  id String @id @default(uuid())
+
+  name String @unique
+
+  category String?
+
+  createdAt DateTime @default(now())
+
+  userSkills UserSkill[]
+  roleSkills RoleSkill[]
+}
+
+model UserSkill {
+  id String @id @default(uuid())
+
+  profileId String
+  skillId   String
+
+  profile Profile @relation(fields: [profileId], references: [id])
+
+  skill Skill @relation(fields: [skillId], references: [id])
+
+  @@unique([profileId, skillId])
+}
+
+model RoleSkill {
+  id String @id @default(uuid())
+
+  roleId  String
+  skillId String
+
+  importance Int @default(3)
+
+  role Role @relation(fields: [roleId], references: [id])
+
+  skill Skill @relation(fields: [skillId], references: [id])
+
+  @@unique([roleId, skillId])
+}
+
+model Resume {
+  id String @id @default(uuid())
+
+  userId String
+
+  fileUrl  String
+  fileName String
+
+  uploadedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  analyses ResumeAnalysis[]
+
+  @@index([userId])
+}
+
+model ResumeAnalysis {
+  id String @id @default(uuid())
+
+  resumeId String
+
+  atsScore Int
+
+  roleMatchScore Int?
+
+  skillCoverage Int?
+
+  strengths Json?
+
+  weaknesses Json?
+
+  missingSkills Json?
+
+  suggestions Json?
+
+  createdAt DateTime @default(now())
+
+  resume Resume @relation(fields: [resumeId], references: [id])
+
+  @@index([resumeId])
+}
+
+model ChatSession {
+  id String @id @default(uuid())
+
+  userId String
+
+  title String
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  messages ChatMessage[]
+
+  @@index([userId])
+}
+
+model ChatMessage {
+  id String @id @default(uuid())
+
+  sessionId String
+
+  role MessageRole
+
+  content String
+
+  createdAt DateTime @default(now())
+
+  session ChatSession @relation(fields: [sessionId], references: [id])
+
+  @@index([sessionId])
+}
